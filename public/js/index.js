@@ -14,3 +14,11 @@ socket.on('disconnect', function(data) {
 socket.on('newMessage', function(data) {
   console.log('New message received', data);
 })
+
+socket.on('welcomeMessage', function(data) {
+  console.log(data);
+})
+
+socket.on('userJoined', function(data) {
+  console.log(data);
+})

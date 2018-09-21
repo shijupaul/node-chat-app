@@ -17,6 +17,9 @@ io.on('connection', (socket) => { // connection from a client will provide socke
   // socket.emit --> emits to specific socket
   //socket.emit('newMessage', {from: 'shijupaul', text: 'shall we meet this evening', createdAt: new Date()});
 
+  socket.emit('welcomeMessage', {from: 'Admin', message: 'welcome to the chat', createdAt: new Date().getTime()});
+  socket.broadcast.emit('userJoined', {from: 'Admin', message: 'new user joined', createdAt: new Date().getTime()});
+
   socket.on('createMessage', (message) => {
     console.log('new message', message);
     //io.emit --> emits to everyone
@@ -25,6 +28,13 @@ io.on('connection', (socket) => { // connection from a client will provide socke
       text: message.text,
       createdAt: new Date().getTime()
     })
+
+    // socket.broadcast.emit --> broadcast to everyone except the current socket
+    // socket.broadcast.emit('newMessage', {
+    //   from: message.from,
+    //   text: message.text,
+    //   createdAt: new Date().getTime()
+    // });
   })
 
   socket.on('disconnect', () => {  // same socket from client is used for various things
