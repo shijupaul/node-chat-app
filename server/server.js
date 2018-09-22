@@ -7,6 +7,8 @@ const socketIo = require('socket.io');
 const port = process.env.PORT || 3000;
 const publicPath = path.join(__dirname, '../public');
 
+const {generateMessage, generateLocationMessage} = require('./utils/message');
+
 var app = express();
 var server = http.createServer(app); // app.listen will create a server behind the scene, we want to customise that
 var io = socketIo(server); // socketio bind to the server
@@ -17,17 +19,15 @@ io.on('connection', (socket) => { // connection from a client will provide socke
   // socket.emit --> emits to specific socket
   //socket.emit('newMessage', {from: 'shijupaul', text: 'shall we meet this evening', createdAt: new Date()});
 
-  socket.emit('welcomeMessage', {from: 'Admin', message: 'welcome to the chat', createdAt: new Date().getTime()});
-  socket.broadcast.emit('userJoined', {from: 'Admin', message: 'new user joined', createdAt: new Date().getTime()});
+  socket.emit('welcomeMessage', generateMessage('Admin', 'welcome to the chat'));
+  socket.broadcast.emit('userJoined', generateMessage('Admin', 'new user joined'));
 
-  socket.on('createMessage', (message) => {
+  // callback to emit acknowledgement
+  socket.on('createMessage', (message, callback) => {
     console.log('new message', message);
     //io.emit --> emits to everyone
-    io.emit('newMessage', {
-      from: message.from,
-      text: message.text,
-      createdAt: new Date().getTime()
-    })
+    io.emit('newMessage', generateMessage(message.from, message.text));
+    callback(`Received message from ${message.from} with text ${message.text}. and all is good`);
 
     // socket.broadcast.emit --> broadcast to everyone except the current socket
     // socket.broadcast.emit('newMessage', {
@@ -35,6 +35,11 @@ io.on('connection', (socket) => { // connection from a client will provide socke
     //   text: message.text,
     //   createdAt: new Date().getTime()
     // });
+  })
+
+  socket.on('createLocationMessage', (message) => {
+    console.log('createLocationMessage', message);
+    io.emit('newLocationMessage', generateLocationMessage('Admin', message.latitude, message.longitude));
   })
 
   socket.on('disconnect', () => {  // same socket from client is used for various things
