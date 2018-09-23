@@ -12,8 +12,16 @@ socket.on('disconnect', function(data) {
 });
 
 socket.on('newMessage', function(data) {
-  console.log('New message received', data);
-  showMessage(data);
+  var template = jQuery('#message-template').html();
+  var html = Mustache.render(template, {
+    from: data.from,
+    text: data.text,
+    createdAt: moment(data.createdAt).format('h:mm:ss a')
+  });
+  jQuery('#messageList').append(html);
+
+  // console.log('New message received', data);
+  // showMessage(data);
 })
 
 socket.on('welcomeMessage', function(data) {
@@ -27,14 +35,23 @@ socket.on('userJoined', function(data) {
 })
 
 socket.on('newLocationMessage', function(data) {
-  var li = jQuery('<li></li>');
-  li.text(`Message From: ${data.from}`);
 
-  var a = jQuery('<a target="_blank">User Location</a>');
-  a.attr('href', data.url);
+  var template = jQuery('#location-message-template').html();
+  var html = Mustache.render(template, {
+    from: data.from,
+    url: data.url,
+    createdAt: moment(data.createdAt).format('h:mm:ss a')
+  });
+  jQuery('#messageList').append(html);
 
-  li.append(a);
-  jQuery('#messageList').append(li);
+  // var li = jQuery('<li></li>');
+  // li.text(`Message From: ${data.from} at ${moment(data.createdAt).format('h:mm a')}`);
+  //
+  // var a = jQuery('<a target="_blank">User Location</a>');
+  // a.attr('href', data.url);
+  // li.append('&nbsp;')
+  // li.append(a);
+  // jQuery('#messageList').append(li);
 })
 // emitting with acknowledgement
 // socket.emit('createMessage',
@@ -47,25 +64,31 @@ socket.on('newLocationMessage', function(data) {
 
 jQuery('#message-form').on('submit', function(e) {
   e.preventDefault(); // prevent page refresh --> default behavior
+  var messageTextBox = jQuery('[name=message]')
   socket.emit('createMessage', {
     from: 'User',
-    text: jQuery('[name=message]').val()
+    text: messageTextBox.val()
   }, function(data) {
     console.log('acknowledgement received.', data)
+    messageTextBox.val('')
   });
 })
 
-jQuery('#send-location').on('click', function(e) {
+var sendLocationButton = jQuery('#send-location')
+sendLocationButton.on('click', function(e) {
   if (!navigator.geolocation) {
     return alert('Geolocation is not supported by your browser');
   }
-
+  sendLocationButton.attr('disabled', 'disabled').text('Sending location.....');
   navigator.geolocation.getCurrentPosition(function(position) {
     var latitude  = position.coords.latitude;
     var longitude = position.coords.longitude;
     console.log(`latitude: ${latitude}, longitude: ${longitude}`);
-    socket.emit('createLocationMessage', {latitude,longitude});
+    socket.emit('createLocationMessage', {latitude,longitude}, () => {
+      sendLocationButton.removeAttr('disabled').text('Send location')
+    });
   }, function(){
+    sendLocationButton.removeAttr('disabled').text('Send location')
     alert('unable to fetch location');
   });
 });
@@ -73,6 +96,6 @@ jQuery('#send-location').on('click', function(e) {
 
 function showMessage(message) {
   var li = jQuery('<li></li>');
-  li.text(`${message.from}: ${message.text}`);
+  li.text(`${message.from}: ${message.text}, received at: ${moment(message.createdAt).format('h:mm:ss a')}`);
   jQuery('#messageList').append(li);
 }

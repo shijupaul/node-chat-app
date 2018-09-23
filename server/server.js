@@ -37,9 +37,10 @@ io.on('connection', (socket) => { // connection from a client will provide socke
     // });
   })
 
-  socket.on('createLocationMessage', (message) => {
+  socket.on('createLocationMessage', (message, callback) => {
     console.log('createLocationMessage', message);
     io.emit('newLocationMessage', generateLocationMessage('Admin', message.latitude, message.longitude));
+    callback();
   })
 
   socket.on('disconnect', () => {  // same socket from client is used for various things
