@@ -19,6 +19,7 @@ socket.on('newMessage', function(data) {
     createdAt: moment(data.createdAt).format('h:mm:ss a')
   });
   jQuery('#messageList').append(html);
+  scrollToBottom();
 
   // console.log('New message received', data);
   // showMessage(data);
@@ -43,7 +44,7 @@ socket.on('newLocationMessage', function(data) {
     createdAt: moment(data.createdAt).format('h:mm:ss a')
   });
   jQuery('#messageList').append(html);
-
+  scrollToBottom();
   // var li = jQuery('<li></li>');
   // li.text(`Message From: ${data.from} at ${moment(data.createdAt).format('h:mm a')}`);
   //
@@ -98,4 +99,20 @@ function showMessage(message) {
   var li = jQuery('<li></li>');
   li.text(`${message.from}: ${message.text}, received at: ${moment(message.createdAt).format('h:mm:ss a')}`);
   jQuery('#messageList').append(li);
+}
+
+
+function scrollToBottom() {
+  var messageList = jQuery('#messageList');
+  var newMessage = messageList.children('li:last-child');
+
+  var scrollHeight = messageList.prop('scrollHeight');
+  var scrollTop = messageList.prop('scrollTop');
+  var clientHeight = messageList.prop('clientHeight');
+  var newMessageHeight = newMessage.innerHeight();
+  var lastMessageHeight = newMessage.prev().innerHeight();
+
+  if (scrollTop + clientHeight  + newMessageHeight + lastMessageHeight>= scrollHeight) {
+    messageList.scrollTop(scrollHeight);
+  }
 }
