@@ -2,7 +2,16 @@ var socket = io();
 // Arrow function may not work in all browsers
 socket.on('connect', function(data) {
   console.log('connected to server', data);
-
+  var search = window.location.search;
+  var params = $.deparam(search.replace("?",""));
+  socket.emit('join', params, function(err) {
+    if (err) {
+      alert(err);
+      window.location.href = "/"; // redirecting user to the home page
+    } else {
+      //console.log('no error');
+    }
+  });
   // emitting this after successfully connected
   // socket.emit('createMessage', {from:'shijupaul', text: 'message from client'});
 })
@@ -10,6 +19,15 @@ socket.on('connect', function(data) {
 socket.on('disconnect', function(data) {
   console.log('disconnected from server', data);
 });
+
+socket.on('updateUserList', function(users) {
+  console.log('users list', users);
+  var ol = jQuery('<ol></ol>');
+  users.forEach(function(name) {
+    ol.append(jQuery('<li></li>').text(name));
+  })
+  jQuery('#users').html(ol);
+})
 
 socket.on('newMessage', function(data) {
   var template = jQuery('#message-template').html();
@@ -67,11 +85,10 @@ jQuery('#message-form').on('submit', function(e) {
   e.preventDefault(); // prevent page refresh --> default behavior
   var messageTextBox = jQuery('[name=message]')
   socket.emit('createMessage', {
-    from: 'User',
     text: messageTextBox.val()
   }, function(data) {
-    console.log('acknowledgement received.', data)
     messageTextBox.val('')
+    console.log('acknowledgement received.', data)
   });
 })
 
@@ -96,9 +113,18 @@ sendLocationButton.on('click', function(e) {
 
 
 function showMessage(message) {
-  var li = jQuery('<li></li>');
-  li.text(`${message.from}: ${message.text}, received at: ${moment(message.createdAt).format('h:mm:ss a')}`);
-  jQuery('#messageList').append(li);
+  // var li = jQuery('<li></li>');
+  // li.text(`${message.from}: ${message.text}, received at: ${moment(message.createdAt).format('h:mm:ss a')}`);
+  // jQuery('#messageList').append(li);
+
+  var template = jQuery('#message-template').html();
+  var html = Mustache.render(template, {
+    from: message.from,
+    text: message.text,
+    createdAt: moment(message.createdAt).format('h:mm:ss a')
+  });
+  jQuery('#messageList').append(html);
+  scrollToBottom();
 }
 
 
